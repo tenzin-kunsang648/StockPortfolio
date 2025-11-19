@@ -46,3 +46,9 @@ $RECYCLE.BIN/
 **/__pycache__/
 **/.venv/
 **/venv/
+
+# Sensitive files
+namedCredentials/
+externalCredentials/
+customMetadata/ 
+permissionsets/
