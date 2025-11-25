@@ -51,7 +51,7 @@ public with sharing class StockSearchController {
                 SELECT Id, Stock__c, Stock__r.Name, Stock__r.Company_Name__c,
                        Stock__r.Current_Price__c, Stock__r.Day_Change__c,
                        Stock__r.Day_Change_Amount__c,
-                       Shares__c, Average_Cost__c, Total_Cost_Basis__c,
+                       Share__c, Average_Cost__c, Total_Cost_Basis__c,
                        Current_Value__c, Gain_Loss__c, Gain_Loss_Percent__c
                 FROM Portfolio_Position__c
                 WHERE Portfolio__c = :portfolioId
@@ -141,7 +141,7 @@ public with sharing class StockSearchController {
             this.currentPrice = pos.Stock__r.Current_Price__c;
             this.dayChange = pos.Stock__r.Day_Change__c;
             this.dayChangeAmount = pos.Stock__r.Day_Change_Amount__c;
-            this.shares = pos.Shares__c;
+            this.shares = pos.Share__c;
             this.averageCost = pos.Average_Cost__c;
             this.totalCost = pos.Total_Cost_Basis__c;
             this.currentValue = pos.Current_Value__c;

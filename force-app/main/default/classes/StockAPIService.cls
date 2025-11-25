@@ -10,7 +10,7 @@ public with sharing class StockAPIService {
     private static final String BASE_URL = 'callout:AlphaVantage/query';
     private static String instance = 'Alpha_Vantage';
 
-    private static String getApiKeyFromCustomMetadata() {
+    private static String getApiKey() {
         API_Configuration__mdt config = API_Configuration__mdt.getInstance(instance);
 
         if(config == NULL || String.isBlank(config.API_Key__c)){

@@ -10,8 +10,7 @@ public with sharing class PortfolioService {
     public static Portfolio__c createPortfolio(String portfolioName) {
         Portfolio__c portfolio = new Portfolio__c(
             Name = portfolioName,
-            OwnerId = UserInfo.getUserId(),
-            Created_Date__c = Date.today()
+            OwnerId = UserInfo.getUserId()
         );
         
         insert portfolio;
@@ -32,7 +31,7 @@ public with sharing class PortfolioService {
         
         // Check if position already exists
         List<Portfolio_Position__c> existingPositions = [
-            SELECT Id, Shares__c, Average_Cost__c, Total_Cost_Basis__c
+            SELECT Id, Share__c, Average_Cost__c, Total_Cost_Basis__c
             FROM Portfolio_Position__c
             WHERE Portfolio__c = :portfolioId
             AND Stock__c = :stock.Id
@@ -44,18 +43,18 @@ public with sharing class PortfolioService {
         if (!existingPositions.isEmpty()) {
             // Update existing position - calculate new average cost
             position = existingPositions[0];
-            Decimal currentValue = position.Shares__c * position.Average_Cost__c;
+            Decimal currentValue = position.Share__c * position.Average_Cost__c;
             Decimal newValue = shares * pricePerShare;
-            Decimal totalShares = position.Shares__c + shares;
+            Decimal totalShares = position.Share__c + shares;
             
             position.Average_Cost__c = (currentValue + newValue) / totalShares;
-            position.Shares__c = totalShares;
+            position.Share__c = totalShares;
         } else {
             // Create new position
             position = new Portfolio_Position__c(
                 Portfolio__c = portfolioId,
                 Stock__c = stock.Id,
-                Shares__c = shares,
+                Share__c = shares,
                 Average_Cost__c = pricePerShare
             );
         }
@@ -63,14 +62,14 @@ public with sharing class PortfolioService {
         upsert position;
         
         // Create transaction record
-        Transaction__c transaction = new Transaction__c(
+        Transaction__c trans = new Transaction__c(
             Portfolio_Position__c = position.Id,
             Transaction_Type__c = 'Buy',
-            Shares__c = shares,
+            Share__c = shares,
             Price_Per_Share__c = pricePerShare,
             Transaction_Date__c = Date.today()
         );
-        insert transaction;
+        insert trans;
         
         return position;
     }
@@ -84,34 +83,34 @@ public with sharing class PortfolioService {
         Decimal pricePerShare
     ) {
         Portfolio_Position__c position = [
-            SELECT Id, Shares__c, Average_Cost__c
+            SELECT Id, Share__c, Average_Cost__c
             FROM Portfolio_Position__c
             WHERE Id = :positionId
             LIMIT 1
         ];
         
-        if (position.Shares__c < shares) {
+        if (position.Share__c < shares) {
             throw new PortfolioException('Cannot sell more shares than owned');
         }
         
-        position.Shares__c -= shares;
+        position.Share__c -= shares;
         
         // Delete position if all shares sold
-        if (position.Shares__c == 0) {
+        if (position.Share__c == 0) {
             delete position;
         } else {
             update position;
         }
         
         // Create sell transaction
-        Transaction__c transaction = new Transaction__c(
+        Transaction__c trans = new Transaction__c(
             Portfolio_Position__c = position.Id,
             Transaction_Type__c = 'Sell',
-            Shares__c = shares,
+            Share__c = shares,
             Price_Per_Share__c = pricePerShare,
             Transaction_Date__c = Date.today()
         );
-        insert transaction;
+        insert trans;
         
         return position;
     }
@@ -122,7 +121,7 @@ public with sharing class PortfolioService {
     public static PortfolioWrapper getPortfolioDetails(Id portfolioId) {
         Portfolio__c portfolio = [
             SELECT Id, Name, Total_Value__c, Total_Cost_Basis__c, 
-                   Total_Gain_Loss__c, Total_Gain_Loss_Percent__c, Created_Date__c
+                   Total_Gain_Loss__c, Total_Gain_Loss_Percent__c, CreatedDate
             FROM Portfolio__c
             WHERE Id = :portfolioId
             LIMIT 1
@@ -131,7 +130,7 @@ public with sharing class PortfolioService {
         List<Portfolio_Position__c> positions = [
             SELECT Id, Stock__c, Stock__r.Name, Stock__r.Company_Name__c,
                    Stock__r.Current_Price__c, Stock__r.Day_Change__c,
-                   Shares__c, Average_Cost__c, Total_Cost_Basis__c,
+                   Share__c, Average_Cost__c, Total_Cost_Basis__c,
                    Current_Value__c, Gain_Loss__c, Gain_Loss_Percent__c
             FROM Portfolio_Position__c
             WHERE Portfolio__c = :portfolioId
@@ -152,7 +151,7 @@ public with sharing class PortfolioService {
     public static List<Portfolio__c> getUserPortfolios() {
         return [
             SELECT Id, Name, Total_Value__c, Total_Gain_Loss__c, 
-                   Total_Gain_Loss_Percent__c, Created_Date__c
+                   Total_Gain_Loss_Percent__c, CreatedDate
             FROM Portfolio__c
             WHERE OwnerId = :UserInfo.getUserId()
             ORDER BY CreatedDate DESC
@@ -164,7 +163,7 @@ public with sharing class PortfolioService {
      */
     public static List<Transaction__c> getPositionTransactions(Id positionId) {
         return [
-            SELECT Id, Transaction_Type__c, Shares__c, Price_Per_Share__c,
+            SELECT Id, Transaction_Type__c, Share__c, Price_Per_Share__c,
                    Total_Amount__c, Transaction_Date__c, Notes__c
             FROM Transaction__c
             WHERE Portfolio_Position__c = :positionId
