@@ -52,5 +52,12 @@
         <members>*</members>
         <name>CustomMetadata</name>
     </types>
+    <types>
+        <members>Transaction__c-Transaction Layout</members>
+        <members>Stock__c-Stock Layout</members>
+        <members>Portfolio__c-Portfolio Layout</members>
+        <members>Portfolio_Position__c-Portfolio Position Layout</members>
+        <name>Layout</name>
+    </types>
     <version>65.0</version>
 </Package>

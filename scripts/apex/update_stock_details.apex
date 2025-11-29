@@ -1,0 +1,1 @@
+StockDataService.upsertStockFromAPI('AAPL');

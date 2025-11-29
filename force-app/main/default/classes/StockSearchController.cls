@@ -6,12 +6,12 @@ public with sharing class StockSearchController {
     /**
      * Search for stocks by symbol or company name
      */
-    @AuraEnabled(cacheable=True)
+    @AuraEnabled(cacheable=true)
     public static List<Stock__c> searchStocks(String searchTerm) {
-        try{
+        try {
             return StockDataService.searchStocks(searchTerm);
         } catch (Exception e) {
-            throw new AuraHandledException('Error searching stock: ' + e.getMessage());
+            throw new AuraHandledException('Error searching stocks: ' + e.getMessage());
         }
     }
     

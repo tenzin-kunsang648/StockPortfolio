@@ -7,7 +7,7 @@
  */
 public with sharing class StockAPIService {
 
-    private static final String BASE_URL = 'callout:AlphaVantage/query';
+    private static final String BASE_URL = 'https://www.alphavantage.co/query';
     private static String instance = 'Alpha_Vantage';
 
     private static String getApiKey() {
@@ -23,9 +23,9 @@ public with sharing class StockAPIService {
     }
 
      /**
-     * Fetch real-time quote for a stock symbol
+     * Fetch real-time quote for a stock symbol 
      */
-    public static StockQuote getStockQuote(String symbol) {
+    public static StockQuote getStockQuote(String symbol) { 
         try {
             String endpoint = BASE_URL + 
                 '?function=GLOBAL_QUOTE' +
@@ -58,7 +58,9 @@ public with sharing class StockAPIService {
     private static StockQuote parseStockQuote(String jsonResponse, String symbol) {
         Map<String, Object> response = (Map<String, Object>) JSON.deserializeUntyped(jsonResponse);
         Map<String, Object> globalQuote = (Map<String, Object>) response.get('Global Quote');
-        
+        System.debug('RESPONSE: ' + response);
+
+        System.debug('GLOBAL QUOTE FROM RESPONSE: ' + globalQuote);
         if (globalQuote == null || globalQuote.isEmpty()) {
             throw new StockAPIException('Invalid symbol or API limit reached');
         }

@@ -1,6 +1,6 @@
 /**
  * Batch class to refresh stock prices from API
- * Schedule to run every hour during market hours
+ * Schedule to run during market hours to update data
  */
 public class StockPriceRefreshBatch implements Database.Batchable<sObject>, Database.AllowsCallouts, Database.Stateful {
     
