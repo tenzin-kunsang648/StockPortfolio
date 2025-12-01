@@ -15,7 +15,7 @@ public with sharing class StockDataService {
             
             // querying existing stock record
             List<Stock__c> existingStocks = [
-                SELECT Id, Name, Company_Name__c
+                SELECT Id, Name, Company_Name__c, External_API_Symbol__c
                 FROM Stock__c
                 WHERE External_API_Symbol__c = :symbol
                 LIMIT 1
