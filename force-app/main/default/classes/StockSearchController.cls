@@ -1,7 +1,7 @@
 /**
  * Controller for Stock Search LWC
  */
-public with sharing class StockSearchController {
+public with sharing class StockSearchController { 
     
     /**
      * Search for stocks by symbol or company name

@@ -1,3 +1,92 @@
 <template>
-    
+    <lightning-card title="Portfolio Dashboard" icon-name="standard:investment_account">
+        <!-- Action Buttons -->
+        <div slot="actions">
+            <lightning-button 
+                label="Add Stock" 
+                icon-name="utility:add" 
+                onclick={handleAddStock}>
+            </lightning-button>
+            <lightning-button 
+                label="Refresh All" 
+                icon-name="utility:refresh" 
+                onclick={handleRefreshAll}
+                disabled={isLoading}>
+            </lightning-button>
+        </div>
+
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+            <div class="slds-align_absolute-center slds-p-around_large">
+                <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Portfolio Summary Cards -->
+        <div class="slds-p-around_medium">
+            <div class="slds-grid slds-wrap slds-gutters">
+                <!-- Total Value -->
+                <div class="slds-col slds-size_1-of-3">
+                    <div class="slds-box slds-theme_shade">
+                        <p class="slds-text-body_small slds-text-color_weak">Total Value</p>
+                        <p class="slds-text-heading_large">{formattedTotalValue}</p>
+                    </div>
+                </div>
+
+                <!-- Gain/Loss -->
+                <div class="slds-col slds-size_1-of-3">
+                    <div class="slds-box slds-theme_shade">
+                        <p class="slds-text-body_small slds-text-color_weak">Total Gain/Loss</p>
+                        <div class="slds-grid slds-grid_vertical-align-center">
+                            <lightning-icon 
+                                icon-name={gainLossIcon} 
+                                size="x-small">
+                            </lightning-icon>
+                            <p class={gainLossClass}>
+                                {formattedGainLoss} ({formattedGainLossPercent})
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Cost -->
+                <div class="slds-col slds-size_1-of-3">
+                    <div class="slds-box slds-theme_shade">
+                        <p class="slds-text-body_small slds-text-color_weak">Total Cost</p>
+                        <p class="slds-text-heading_large">${portfolioSummary.totalCost}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Positions Table -->
+        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+            <template if:true={hasPositions}>
+                <h3 class="slds-text-heading_small slds-m-bottom_small">Holdings</h3>
+                <lightning-datatable
+                    key-field="id"
+                    data={positions}
+                    columns={columns}
+                    hide-checkbox-column
+                    onrowaction={handleRowAction}>
+                </lightning-datatable>
+            </template>
+
+            <!-- Empty State -->
+            <template if:false={hasPositions}>
+                <div class="slds-align_absolute-center slds-p-around_xx-large">
+                    <lightning-icon icon-name="utility:currency" size="large"></lightning-icon>
+                    <h3 class="slds-text-heading_small slds-m-top_small">No positions yet</h3>
+                    <p class="slds-text-body_regular slds-text-color_weak">Add stocks to start tracking</p>
+                    <lightning-button 
+                        label="Add Your First Stock" 
+                        variant="brand"
+                        icon-name="utility:add" 
+                        onclick={handleAddStock}
+                        class="slds-m-top_medium">
+                    </lightning-button>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
 </template>

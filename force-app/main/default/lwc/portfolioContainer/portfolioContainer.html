@@ -1,0 +1,39 @@
+<template>
+    <div class="slds-grid slds-wrap">
+        <!-- Main Portfolio Dashboard -->
+        <div class="slds-col slds-size_1-of-1">
+            <c-portfolio-dashboard 
+                record-id={recordId}
+                onaddstock={handleAddStock}>
+            </c-portfolio-dashboard>
+        </div>
+
+        <!-- Stock Search Modal (shown conditionally) -->
+        <template if:true={showStockSearch}>
+            <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container" style="max-width: 50rem;">
+                    <!-- Modal Header -->
+                    <header class="slds-modal__header">
+                        <button 
+                            class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" 
+                            title="Close"
+                            onclick={handleCloseModal}>
+                            <lightning-icon icon-name="utility:close" alternative-text="close" size="small"></lightning-icon>
+                            <span class="slds-assistive-text">Close</span>
+                        </button>
+                        <h2 class="slds-modal__title slds-hyphenate">Add Stock to Portfolio</h2>
+                    </header>
+
+                    <!-- Modal Body -->
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <c-stock-search 
+                            portfolio-id={recordId}
+                            onstockadded={handleStockAdded}>
+                        </c-stock-search>
+                    </div>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+    </div>
+</template>

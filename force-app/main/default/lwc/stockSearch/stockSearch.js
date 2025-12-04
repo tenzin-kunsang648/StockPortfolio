@@ -1,4 +1,4 @@
-import { LightningElement, api, track, wire } from 'lwc';
+import { LightningElement, api, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import searchStocks from '@salesforce/apex/StockSearchController.searchStocks';
 import addStockToPortfolio from '@salesforce/apex/StockSearchController.addStockToPortfolio';
@@ -7,13 +7,12 @@ export default class StockSearch extends LightningElement {
     @api portfolioId;
     @track searchTerm = '';
     @track searchResults = [];
-    @track selectedStock = null;
+    @track selectedStockId = null;
     @track shares = 0;
     @track pricePerShare = 0;
     @track isLoading = false;
-    @track showAddModal = false;
 
-    // handling search input
+    // Handle search input
     handleSearchChange(event) {
         this.searchTerm = event.target.value;
         if (this.searchTerm.length >= 2) {
@@ -23,7 +22,7 @@ export default class StockSearch extends LightningElement {
         }
     }
 
-    // debounce search to avoid excessive API calls
+    // Debounce search to avoid excessive API calls
     debounceSearch() {
         clearTimeout(this.searchTimeout);
         this.searchTimeout = setTimeout(() => {
@@ -31,7 +30,7 @@ export default class StockSearch extends LightningElement {
         }, 500);
     }
 
-    // perform the search
+    // Perform the search
     performSearch() {
         this.isLoading = true;
         searchStocks({ searchTerm: this.searchTerm })
@@ -43,7 +42,8 @@ export default class StockSearch extends LightningElement {
                     price: stock.Current_Price__c,
                     change: stock.Day_Change__c,
                     changeAmount: stock.Day_Change_Amount__c,
-                    isPositive: stock.Day_Change__c >= 0
+                    isPositive: stock.Day_Change__c >= 0,
+                    isSelected: false
                 }));
                 this.isLoading = false;
             })
@@ -53,30 +53,51 @@ export default class StockSearch extends LightningElement {
             });
     }
 
-    // handle stock selection
+    // Handle stock selection (expand form)
     handleStockSelect(event) {
         const stockId = event.currentTarget.dataset.id;
-        this.selectedStock = this.searchResults.find(s => s.Id === stockId);
-        this.pricePerShare = this.selectedStock.price;
-        this.showAddModal = true;
+        
+        // Update search results to show form for selected stock
+        this.searchResults = this.searchResults.map(stock => ({
+            ...stock,
+            isSelected: stock.Id === stockId
+        }));
+
+        // Set initial values
+        const selectedStock = this.searchResults.find(s => s.Id === stockId);
+        this.selectedStockId = stockId;
+        this.pricePerShare = selectedStock.price;
+        this.shares = 1; // Default to 1 share
     }
 
-    // handle shares input
+    // Handle shares input
     handleSharesChange(event) {
         this.shares = parseFloat(event.target.value) || 0;
     }
 
-    // handle price input
+    // Handle price input
     handlePriceChange(event) {
         this.pricePerShare = parseFloat(event.target.value) || 0;
     }
 
-    // calculate total cost
+    // Calculate total cost
     get totalCost() {
         return (this.shares * this.pricePerShare).toFixed(2);
     }
 
-    // add stock to portfolio
+    // Handle cancel
+    handleCancel() {
+        // Collapse all forms
+        this.searchResults = this.searchResults.map(stock => ({
+            ...stock,
+            isSelected: false
+        }));
+        this.selectedStockId = null;
+        this.shares = 0;
+        this.pricePerShare = 0;
+    }
+
+    // Add stock to portfolio
     handleAddStock() {
         if (!this.validateInputs()) {
             return;
@@ -85,14 +106,20 @@ export default class StockSearch extends LightningElement {
         this.isLoading = true;
         addStockToPortfolio({
             portfolioId: this.portfolioId,
-            stockId: this.selectedStock.Id,
+            stockId: this.selectedStockId,
             shares: this.shares,
             pricePerShare: this.pricePerShare
         })
             .then(() => {
                 this.showToast('Success', 'Stock added to portfolio', 'success');
-                this.closeModal();
+                
+                // Fire event to parent to close modal and refresh
                 this.dispatchEvent(new CustomEvent('stockadded'));
+                
+                // Reset form
+                this.handleCancel();
+                this.searchTerm = '';
+                this.searchResults = [];
             })
             .catch(error => {
                 this.showToast('Error', error.body.message, 'error');
@@ -102,7 +129,7 @@ export default class StockSearch extends LightningElement {
             });
     }
 
-    // validate inputs
+    // Validate inputs
     validateInputs() {
         if (this.shares <= 0) {
             this.showToast('Error', 'Shares must be greater than 0', 'error');
@@ -115,15 +142,7 @@ export default class StockSearch extends LightningElement {
         return true;
     }
 
-    // close modal
-    closeModal() {
-        this.showAddModal = false;
-        this.selectedStock = null;
-        this.shares = 0;
-        this.pricePerShare = 0;
-    }
-
-    // show toast notification
+    // Show toast notification
     showToast(title, message, variant) {
         this.dispatchEvent(
             new ShowToastEvent({
@@ -134,7 +153,7 @@ export default class StockSearch extends LightningElement {
         );
     }
 
-    // computed properties
+    // Computed properties
     get hasResults() {
         return this.searchResults.length > 0;
     }

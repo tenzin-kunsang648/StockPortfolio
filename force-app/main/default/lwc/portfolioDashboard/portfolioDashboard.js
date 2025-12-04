@@ -6,7 +6,7 @@ import getPortfolioPositions from '@salesforce/apex/StockSearchController.getPor
 import refreshStockPrice from '@salesforce/apex/StockSearchController.refreshStockPrice';
 
 export default class PortfolioDashboard extends LightningElement {
-    @api portfolioId;
+    @api recordId;
     @track portfolioSummary = {};
     @track positions = [];
     @track isLoading = false;
@@ -16,7 +16,7 @@ export default class PortfolioDashboard extends LightningElement {
     wiredSummaryResult;
 
     // Wire portfolio summary
-    @wire(getPortfolioSummary, { portfolioId: '$portfolioId' })
+    @wire(getPortfolioSummary, { portfolioId: '$recordId' })
     wiredSummary(result) {
         this.wiredSummaryResult = result;
         if (result.data) {
@@ -29,7 +29,7 @@ export default class PortfolioDashboard extends LightningElement {
     }
 
     // Wire portfolio positions
-    @wire(getPortfolioPositions, { portfolioId: '$portfolioId' })
+    @wire(getPortfolioPositions, { portfolioId: '$recordId' })
     wiredPositions(result) {
         this.wiredPositionsResult = result;
         if (result.data) {
@@ -128,6 +128,10 @@ export default class PortfolioDashboard extends LightningElement {
     ];
 
     // Computed properties
+     get portfolioId() {
+        return this.recordId;
+    }
+    
     get hasPositions() {
         return this.positions && this.positions.length > 0;
     }
@@ -199,7 +203,8 @@ export default class PortfolioDashboard extends LightningElement {
             });
     }
 
-    // Refresh all prices
+    // exposing this to parent component - refreshing all prices
+    @api
     handleRefreshAll() {
         this.isLoading = true;
         
