@@ -62,7 +62,7 @@ Real-time stock portfolio management platform built on Salesforce
 3. Setup → Custom Metadata Types → Add API key
 4. Add "Portfolio Container" to Portfolio record page
 
-[Full setup instructions →](docs/TECHNICAL_GUIDE.md)
+[Full setup instructions →](docs/TECHNICAL_GUIDE.MD)
 
 ---
 
