@@ -40,6 +40,7 @@ export default class StockSearch extends LightningElement {
                     symbol: stock.Name,
                     name: stock.Company_Name__c,
                     price: stock.Current_Price__c,
+                    // change: (stock.Day_Change__c != null ? stock.Day_Change__c : 0).toFixed(2),
                     change: stock.Day_Change__c,
                     changeAmount: stock.Day_Change_Amount__c,
                     isPositive: stock.Day_Change__c >= 0,
