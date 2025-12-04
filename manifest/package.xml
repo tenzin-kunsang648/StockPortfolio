@@ -59,5 +59,20 @@
         <members>Portfolio_Position__c-Portfolio Position Layout</members>
         <name>Layout</name>
     </types>
+    <!-- List Views -->
+    <types>
+        <members>*</members>
+        <name>ListView</name>
+    </types>
+    <!-- Lightning Pages (Record Pages, App Pages, Home Pages) -->
+    <types>
+        <members>*</members>
+        <name>FlexiPage</name>
+    </types>
+    <!-- Compact Layouts -->
+    <types>
+        <members>*</members>
+        <name>CompactLayout</name>
+    </types>
     <version>65.0</version>
 </Package>
