@@ -20,8 +20,9 @@ The dashboard shows three key metrics:
 
 ### Refresh Prices
 
-- **Refresh All** - Updates all stock prices
+- **Refresh All** - Updates all stock prices (processes in background)
 - **Per-stock refresh** - Click the refresh icon in any row
+- **Email notification** - Receive email when bulk refresh completes
 
 ### Understanding the Holdings Table
 

@@ -68,6 +68,81 @@ public with sharing class StockSearchController {
             throw new AuraHandledException('Error fetching positions: ' + e.getMessage());
         }
     }
+
+    /**
+     * Refresh single stock asynchronously
+     */
+    @AuraEnabled
+    public static void refreshSingleStock(Id stockId, Id portfolioId) {
+        try {
+            // Get current user ID
+            Id userId = UserInfo.getUserId();
+            
+            Stock__c stock = [
+                SELECT External_API_Symbol__c 
+                FROM Stock__c 
+                WHERE Id = :stockId 
+                LIMIT 1
+            ];
+            
+            // Enqueue async refresh with userId
+            System.enqueueJob(new SingleStockRefreshQueueable(
+                stock.External_API_Symbol__c,
+                stockId,
+                portfolioId,
+                userId
+            ));
+            
+        } catch (Exception e) {
+            throw new AuraHandledException('Error starting refresh: ' + e.getMessage());
+        }
+    }
+
+    /**
+     * Refresh all stocks in a portfolio asynchronously
+     * Publishes Platform Event when ALL stocks are complete
+     */
+    @AuraEnabled
+    public static void refreshAllPortfolioStocks(Id portfolioId) {
+        try {
+
+            // get current user id
+            Id userId = UserInfo.getUserId();
+
+            // Get all unique stocks in this portfolio
+            List<Portfolio_Position__c> positions = [
+                SELECT Stock__c, Stock__r.External_API_Symbol__c
+                FROM Portfolio_Position__c
+                WHERE Portfolio__c = :portfolioId
+                AND Stock__r.External_API_Symbol__c != null
+            ];
+            
+            if (positions.isEmpty()) {
+                throw new AuraHandledException('No stocks found in portfolio');
+            }
+            
+            // Create list of unique stocks to refresh
+            Set<Id> processedStocks = new Set<Id>();
+            List<PortfolioRefreshQueueable.StockWrapper> stocksToRefresh = 
+                new List<PortfolioRefreshQueueable.StockWrapper>();
+            
+            for (Portfolio_Position__c pos : positions) {
+                if (!processedStocks.contains(pos.Stock__c)) {
+                    stocksToRefresh.add(new PortfolioRefreshQueueable.StockWrapper(
+                        pos.Stock__c,
+                        pos.Stock__r.External_API_Symbol__c
+                    ));
+                    processedStocks.add(pos.Stock__c);
+                }
+            }
+            
+            // Enqueue the refresh job
+            System.enqueueJob(new PortfolioRefreshQueueable(stocksToRefresh, portfolioId, userId));
+            
+        } catch (Exception e) {
+            throw new AuraHandledException('Error starting refresh: ' + e.getMessage());
+        }
+    }
     
     /**
      * Get portfolio summary

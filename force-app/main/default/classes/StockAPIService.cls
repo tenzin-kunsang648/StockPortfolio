@@ -112,6 +112,10 @@ public with sharing class StockAPIService {
      */
     private static CompanyOverview parseCompanyOverview(String jsonResponse, String symbol) {
         Map<String, Object> data = (Map<String, Object>) JSON.deserializeUntyped(jsonResponse);
+        System.debug(' data returned: ' + data);
+        System.debug(' NAME data returned: ' + data.get('Name'));
+        System.debug(' DESCRIPTION data returned: ' + data.get('Description'));
+        System.debug(' SECTOR data returned: ' + data.get('Sector'));
         
         CompanyOverview overview = new CompanyOverview();
         overview.symbol = symbol;

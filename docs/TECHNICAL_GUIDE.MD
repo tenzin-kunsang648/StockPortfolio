@@ -16,6 +16,8 @@
 - `PortfolioService` - Portfolio management
 - `StockSearchController` - LWC backend
 - `StockPriceRefreshBatch` - Scheduled price updates
+- `PortfolioRefreshQueueable` - Async stock refresh with Platform Events
+- `SingleStockRefreshQueueable` - Individual stock refresh
 
 **LWC Components:**
 - `portfolioContainer` - Parent component managing modal state

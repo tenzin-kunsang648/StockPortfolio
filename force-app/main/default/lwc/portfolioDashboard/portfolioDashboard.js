@@ -1,19 +1,27 @@
 import { LightningElement, api, wire, track } from 'lwc';
 import { refreshApex } from '@salesforce/apex';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { subscribe, unsubscribe, onError } from 'lightning/empApi';
 import getPortfolioSummary from '@salesforce/apex/StockSearchController.getPortfolioSummary';
 import getPortfolioPositions from '@salesforce/apex/StockSearchController.getPortfolioPositions';
-import refreshStockPrice from '@salesforce/apex/StockSearchController.refreshStockPrice';
+import refreshAllPortfolioStocks from '@salesforce/apex/StockSearchController.refreshAllPortfolioStocks';
+import refreshSingleStock from '@salesforce/apex/StockSearchController.refreshSingleStock';
 
 export default class PortfolioDashboard extends LightningElement {
     @api recordId;
     @track portfolioSummary = {};
     @track positions = [];
     @track isLoading = false;
+    @track isRefreshing = false;
     @track chartData = [];
+    @track totalStocksToRefresh = 0;
     
     wiredPositionsResult;
     wiredSummaryResult;
+    
+    // Platform Event subscription
+    channelName = '/event/Portfolio_Refresh_Complete__e';
+    subscription = {};
 
     // Wire portfolio summary
     @wire(getPortfolioSummary, { portfolioId: '$recordId' })
@@ -42,6 +50,122 @@ export default class PortfolioDashboard extends LightningElement {
         }
     }
 
+    // Subscribe to Platform Events on component load
+    connectedCallback() {
+        this.handleSubscribe();
+        this.registerErrorListener();
+    }
+
+    disconnectedCallback() {
+        this.handleUnsubscribe();
+    }
+
+    // Subscribe to portfolio refresh complete events
+    handleSubscribe() {
+        const messageCallback = (response) => {
+            const payload = response.data.payload;
+            this.handlePortfolioRefreshComplete(payload);
+        };
+        
+        subscribe(this.channelName, -1, messageCallback).then(response => {
+            this.subscription = response;
+            console.log('Subscribed to portfolio refresh events');
+        });
+    }
+
+    handleUnsubscribe() {
+        unsubscribe(this.subscription, response => {
+            console.log('Unsubscribed from portfolio refresh events');
+        });
+    }
+
+    registerErrorListener() {
+        onError(error => {
+            console.error('Platform Event error:', error);
+        });
+    }
+
+    // Handle portfolio refresh completion from Platform Event
+    handlePortfolioRefreshComplete(payload) {
+        // Only process events for this portfolio
+        if (payload.Portfolio_Id__c !== this.recordId) {
+            return;
+        }
+
+        const totalStocks = payload.Total_Stocks__c;
+        const successCount = payload.Success_Count__c;
+        const failureCount = payload.Failure_Count__c;
+        const errorMessages = payload.Error_Messages__c;
+
+        console.log(`Portfolio refresh complete: ${successCount} succeeded, ${failureCount} failed`);
+
+        // Refresh the UI data
+        Promise.all([
+            refreshApex(this.wiredPositionsResult),
+            refreshApex(this.wiredSummaryResult)
+        ])
+        .then(() => {
+            this.isRefreshing = false;
+            
+            // Show appropriate toast message
+            if (failureCount === 0) {
+                this.showToast(
+                    'Success', 
+                    `All ${totalStocks} stocks updated successfully!`, 
+                    'success'
+                );
+            } else if (successCount > 0) {
+                this.showToast(
+                    'Partial Success', 
+                    `${successCount} of ${totalStocks} stocks updated. ${failureCount} failed.`, 
+                    'warning'
+                );
+            } else {
+                this.showToast(
+                    'Error', 
+                    `Failed to update all stocks. ${errorMessages || ''}`, 
+                    'error'
+                );
+            }
+        })
+        .catch(error => {
+            console.error('Refresh error:', error);
+            this.isRefreshing = false;
+            this.showToast('Error', 'Failed to refresh data', 'error');
+        });
+    }
+
+    // Handle row actions (refresh button)
+    handleRowAction(event) {
+        const actionName = event.detail.action.name;
+        const row = event.detail.row;
+
+        if (actionName === 'refresh') {
+            this.refreshSingleStockPrice(row.id, row.stockId, row.stockSymbol);
+        }
+    }
+
+    // Refresh single stock price
+    refreshSingleStockPrice(positionId, stockId, stockSymbol) {
+        this.isRefreshing = true;
+        this.currentStockRefreshing = stockSymbol;
+        this.refreshProgress = 0;
+        this.totalStocksToRefresh = 1;
+
+        refreshSingleStock({ stockId: stockId, portfolioId: this.recordId })
+            .then(() => {
+                this.showToast(
+                    'Refresh Started', 
+                    `${stockSymbol} is updating. This may take up to 30 seconds...`, 
+                    'info'
+                );
+            })
+            .catch(error => {
+                this.showToast('Error', error.body?.message || 'Failed to start refresh', 'error');
+                this.isRefreshing = false;
+            });
+    }
+
     // Prepare data for pie chart
     prepareChartData() {
         this.chartData = this.positions.map(pos => ({
@@ -60,7 +184,7 @@ export default class PortfolioDashboard extends LightningElement {
         return colors[Math.floor(Math.random() * colors.length)];
     }
 
-    // Columns for positions datatable
+    // Columns for positions datatable (NO REFRESH ICON)
     columns = [
         { 
             label: 'Stock', 
@@ -128,7 +252,7 @@ export default class PortfolioDashboard extends LightningElement {
     ];
 
     // Computed properties
-     get portfolioId() {
+    get portfolioId() {
         return this.recordId;
     }
     
@@ -170,63 +294,33 @@ export default class PortfolioDashboard extends LightningElement {
         return (value >= 0 ? '+' : '') + value.toFixed(2) + '%';
     }
 
-    // Handle row actions (refresh button)
-    handleRowAction(event) {
-        const actionName = event.detail.action.name;
-        const row = event.detail.row;
+    // Refresh all stocks in portfolio
+    handleRefreshAll() {
+        if (this.isRefreshing) return;
 
-        if (actionName === 'refresh') {
-            this.refreshSingleStock(row.id);
-        }
-    }
-
-    // Refresh single stock price
-    refreshSingleStock(positionId) {
-        this.isLoading = true;
-        const position = this.positions.find(p => p.id === positionId);
+        // Get unique stock count
+        const uniqueStocks = new Set();
+        this.positions.forEach(pos => uniqueStocks.add(pos.stockId));
         
-        if (!position) return;
+        this.totalStocksToRefresh = uniqueStocks.size;
+        this.isRefreshing = true;
 
-        refreshStockPrice({ stockId: position.stockId })
+        refreshAllPortfolioStocks({ portfolioId: this.recordId })
             .then(() => {
-                this.showToast('Success', `Refreshed price for ${position.stockSymbol}`, 'success');
-                return refreshApex(this.wiredPositionsResult);
-            })
-            .then(() => {
-                return refreshApex(this.wiredSummaryResult);
+                this.showToast(
+                    'Refresh Started', 
+                    `Refreshing ${this.totalStocksToRefresh} stocks. This will take approximately ${Math.ceil(this.totalStocksToRefresh * 0.8)} minutes...`, 
+                    'info'
+                );
             })
             .catch(error => {
-                this.showToast('Error', error.body.message, 'error');
-            })
-            .finally(() => {
-                this.isLoading = false;
+                this.showToast('Error', error.body?.message || 'Failed to start refresh', 'error');
+                this.isRefreshing = false;
             });
-    }
-
-    // exposing this to parent component - refreshing all prices
-    @api
-    handleRefreshAll() {
-        this.isLoading = true;
-        
-        // Refresh all positions
-        Promise.all([
-            refreshApex(this.wiredPositionsResult),
-            refreshApex(this.wiredSummaryResult)
-        ])
-        .then(() => {
-            this.showToast('Success', 'Portfolio refreshed', 'success');
-        })
-        .catch(error => {
-            this.showToast('Error', 'Failed to refresh portfolio', 'error');
-        })
-        .finally(() => {
-            this.isLoading = false;
-        });
     }
 
     // Open add stock modal
     handleAddStock() {
-        // Fire event to parent to open stock search modal
         this.dispatchEvent(new CustomEvent('addstock'));
     }
 

@@ -24,9 +24,11 @@ Real-time stock portfolio management platform built on Salesforce
 - Portfolio dashboard with live updates
 - Stock search and add functionality
 - Automated price updates via scheduled batch jobs
+- Real-time stock refresh with Platform Events and progress tracking
+- Email notifications on portfolio refresh completion
 
 **In Progress:**
-- Real-time price alerts using Platform Events
+- Price alert system (notify when stocks hit target prices)
 
 **Planned:**
 - Tableau CRM analytics
@@ -50,8 +52,9 @@ Real-time stock portfolio management platform built on Salesforce
 
 **Core Components:**
 - **Portfolio Management** - Track multiple portfolios with positions and transactions
-- **Real-time Pricing** - Automated batch updates from Alpha Vantage API
-- **Price Alerts** *(Coming Soon)* - Platform Event-driven notifications when stocks hit target prices
+- **Real-time Pricing** - Automated updates via Queueable jobs with Platform Events
+- **Real-time Notifications** - Live progress tracking and email alerts on refresh completion
+- **Price Alerts** *(Planned)* - Target price notifications
 
 ---
 
@@ -76,9 +79,10 @@ Real-time stock portfolio management platform built on Salesforce
 - [x] Automated price refresh batch job
 
 ### Phase 2: Real-time Features 
-- [ ] Price alert system with Platform Events
-- [ ] Live notifications in UI
-- [ ] Multi-user collaboration updates
+- [x] Platform Events infrastructure
+- [x] Real-time refresh progress tracking
+- [x] Email notifications on completion
+- [ ] Price alert system (notify on target price)
 
 ### Phase 3: AI-Powered Insights 
 - [ ] Einstein Discovery for portfolio risk prediction

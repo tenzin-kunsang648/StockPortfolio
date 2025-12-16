@@ -12,7 +12,7 @@
                 label="Refresh All" 
                 icon-name="utility:refresh" 
                 onclick={handleRefreshAll}
-                disabled={isLoading}>
+                disabled={isRefreshing}>
             </lightning-button>
         </div>
 
@@ -20,6 +20,22 @@
         <template if:true={isLoading}>
             <div class="slds-align_absolute-center slds-p-around_large">
                 <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Refresh Status -->
+        <template if:true={isRefreshing}>
+            <div class="slds-m-around_medium">
+                <div class="slds-notify slds-notify_toast slds-theme_info" role="status">
+                    <span class="slds-icon_container slds-icon-utility-info slds-m-right_small">
+                        <lightning-icon icon-name="utility:sync" size="small"></lightning-icon>
+                    </span>
+                    <div class="slds-notify__content">
+                        <h2 class="slds-text-heading_small">
+                            Refreshing {totalStocksToRefresh} stocks... This may take several minutes.
+                        </h2>
+                    </div>
+                </div>
             </div>
         </template>
 

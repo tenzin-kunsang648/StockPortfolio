@@ -11,6 +11,11 @@ public with sharing class StockDataService {
         try {
             // Fetch data from API
             StockAPIService.StockQuote quote = StockAPIService.getStockQuote(symbol);
+            // Wait 15 seconds between calls to respect rate limit
+            Long startTime = System.currentTimeMillis();
+            while (System.currentTimeMillis() - startTime < 15000) {
+                // Busy wait for 15 seconds
+            }
             StockAPIService.CompanyOverview overview = StockAPIService.getCompanyOverview(symbol);
             
             // querying existing stock record
@@ -24,6 +29,7 @@ public with sharing class StockDataService {
             Stock__c stock;
             if (!existingStocks.isEmpty()) {
                 stock = existingStocks[0];
+                System.debug('CURRENT STOCK COMPANY NAME: ' + stock.Company_Name__c);
             } else {
                 stock = new Stock__c();
                 stock.Name = symbol;
