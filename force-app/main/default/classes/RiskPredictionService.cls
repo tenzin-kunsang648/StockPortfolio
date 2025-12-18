@@ -5,8 +5,8 @@
 public with sharing class RiskPredictionService {
     
     // TODO: Configure this URL in Custom Metadata or Named Credential
-    // For production, use a Named Credential instead of hardcoding
-    private static final String API_BASE_URL = 'https://your-api-url.com'; // Replace with your API URL
+    // For production, will use a Named Credential instead of hardcoding
+    private static final String API_BASE_URL = 'https://your-api-url.com'; 
     
     /**
      * Predict risk score for a single stock

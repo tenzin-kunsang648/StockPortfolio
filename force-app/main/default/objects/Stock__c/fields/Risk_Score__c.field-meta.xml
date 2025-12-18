@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Risk_Score__c</fullName>
+    <externalId>false</externalId>
     <label>Risk Score</label>
     <precision>18</precision>
     <required>false</required>
@@ -11,4 +12,3 @@
     <unique>false</unique>
     <description>ML-predicted risk score (0-100, higher = more risky)</description>
 </CustomField>
-
