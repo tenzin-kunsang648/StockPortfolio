@@ -68,8 +68,8 @@ public class StockPriceRefreshBatch implements Database.Batchable<sObject>, Data
             sendErrorNotification();
         }
         
-        // Recalculate portfolio values after price updates
-        recalculatePortfolioValues();
+        // Note: StockTrigger will automatically recalculate Total_Value__c 
+        // when stock prices are updated, so no manual recalculation needed here
     }
     
     private void sendErrorNotification() {
@@ -103,21 +103,6 @@ public class StockPriceRefreshBatch implements Database.Batchable<sObject>, Data
             Messaging.sendEmail(new List<Messaging.SingleEmailMessage>{ mail });
         } catch (Exception e) {
             System.debug('Error sending notification email: ' + e.getMessage());
-        }
-    }
-    
-    private void recalculatePortfolioValues() {
-        // Trigger portfolio value recalculation
-        // This will update rollup summaries and formulas
-        List<Portfolio__c> portfolios = [
-            SELECT Id, Total_Value__c
-            FROM Portfolio__c
-            LIMIT 1000
-        ];
-        
-        if (!portfolios.isEmpty()) {
-            // Touch portfolios to recalculate formulas
-            update portfolios;
         }
     }
     
