@@ -16,7 +16,7 @@ public with sharing class StockSearchController {
     }
     
     /**
-     * Add stock to portfolio
+     * Add stock to portfolio testing
      */
     @AuraEnabled
     public static Portfolio_Position__c addStockToPortfolio(
@@ -186,6 +186,30 @@ public with sharing class StockSearchController {
             return StockDataService.upsertStockFromAPI(stock.External_API_Symbol__c);
         } catch (Exception e) {
             throw new AuraHandledException('Error refreshing price: ' + e.getMessage());
+        }
+    }
+    
+    /**
+     * Predict risk score for a stock using ML model
+     */
+    @AuraEnabled
+    public static RiskPredictionService.RiskPredictionResult predictStockRisk(Id stockId) {
+        try {
+            return RiskPredictionService.predictRisk(stockId);
+        } catch (Exception e) {
+            throw new AuraHandledException('Error predicting risk: ' + e.getMessage());
+        }
+    }
+    
+    /**
+     * Predict risk scores for all stocks in a portfolio
+     */
+    @AuraEnabled
+    public static void predictPortfolioRisk(Id portfolioId) {
+        try {
+            RiskPredictionService.predictRiskForPortfolio(portfolioId);
+        } catch (Exception e) {
+            throw new AuraHandledException('Error predicting portfolio risk: ' + e.getMessage());
         }
     }
     
